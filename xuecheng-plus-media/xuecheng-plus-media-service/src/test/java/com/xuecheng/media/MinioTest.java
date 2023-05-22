@@ -1,0 +1,69 @@
+package com.xuecheng.media;
+
+import com.j256.simplemagic.ContentInfo;
+import com.j256.simplemagic.ContentInfoUtil;
+import io.minio.*;
+import io.minio.errors.*;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+
+import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+/**
+ * Created by wxh
+ * Date 2023/5/22 15:03
+ * Description 测试minio的sdk
+ */
+public class MinioTest {
+
+    MinioClient minioClient =
+            MinioClient.builder()
+                    .endpoint("http://192.168.101.65:9000")
+                    .credentials("minioadmin", "minioadmin")
+                    .build();
+
+    @Test
+    public void test_upload() throws Exception {
+        //根据扩展名取出mimeType
+        ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(".mp3");
+        String mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE;//通用mimeType，字节流
+        if(extensionMatch!=null){
+            mimeType = extensionMatch.getMimeType();
+        }
+
+
+        UploadObjectArgs testBucket = UploadObjectArgs.builder()
+                .bucket("testbucket")
+                .filename("D:\\download-complete.mp3")
+                .contentType(mimeType)
+                .object("1.mp3")
+                .build();
+        minioClient.uploadObject(testBucket);
+    }
+
+    @Test
+    public void test_delete() throws Exception {
+        RemoveObjectArgs deleteObject = RemoveObjectArgs.builder().bucket("testbucket").object("1.mp3").build();
+        minioClient.removeObject(deleteObject);
+    }
+
+    @Test
+    public void test_getFile() throws Exception {
+        GetObjectArgs getObject = GetObjectArgs.builder().bucket("testbucket").object("1.mp3").build();
+        FilterInputStream inputStream = minioClient.getObject(getObject);
+        FileOutputStream outputStream=new FileOutputStream(new File("D:\\work\\1a.mp3"));
+        IOUtils.copy(inputStream,outputStream);
+
+        //md5检验文件完整性
+        String source_md5 = DigestUtils.md5Hex(new FileInputStream(new File("D:\\download-complete.mp3")));
+        String local_md5 = DigestUtils.md5Hex(new FileInputStream(new File("D:\\work\\1a.mp3")));
+        if(source_md5.equals(local_md5)){
+            System.out.println("下载成功");
+        }
+
+    }
+}
