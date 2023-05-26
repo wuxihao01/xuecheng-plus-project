@@ -22,8 +22,8 @@ public class BigFileTest {
         File sourceFile = new File("D:\\upload\\test.mp4");
 
         String chunkFilePath="D:\\upload\\chunk\\";
-        //1MB
-        int chunkSize=1024*1024*1;
+        //5MB
+        int chunkSize=1024*1024*5;
         //分块文件个数
         int chunkNum= (int) Math.ceil(sourceFile.length()*1.0/chunkSize);
 
@@ -84,4 +84,6 @@ public class BigFileTest {
             System.out.println("文件合并成功");
         }
     }
+
+
 }
